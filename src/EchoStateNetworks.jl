@@ -90,6 +90,16 @@ function update{T<:AbstractFloat}(esn::EchoStateNetwork{T}, state::Vector{T},
     + esn.noise_level*(rand(esn.rng, T, esn.Nr)-T(0.5))
 end
 
+function reservoir_states{T<:AbstractFloat}(esn::EchoStateNetwork{T}, inputs::Matrix{T}, outputs::Matrix{T})
+    Nd = size(inputs, 2)
+    states = zeros(T, (esn.Nr, Nd))
+    arch = esn.teacher_forcing ? TeacherForcing() : NoTeacherForcing()
+    for t = 2:size(inputs,2)
+        states[:,t] = (one(T)-esn.leaking_rate)*states[:,t-1] + esn.leaking_rate*update(esn, states[:,t-1], inputs[:,t], outputs[:,t-1], arch)
+    end
+    return states
+end
+
 function train!{T<:AbstractFloat}(esn::EchoStateNetwork{T}, inputs::Matrix{T}, outputs::Matrix{T};
                                   discard::Integer=min(div(size(inputs,2),10), 100), reg::AbstractFloat=1e-8)
 
@@ -97,15 +107,10 @@ function train!{T<:AbstractFloat}(esn::EchoStateNetwork{T}, inputs::Matrix{T}, o
     @assert(size(outputs, 1) == esn.No)
     @assert(size(inputs, 2) == size(outputs, 2))
 
-    Nd = size(inputs, 2)
-    states = zeros(T, (esn.Nr, Nd))
-    arch = esn.teacher_forcing ? TeacherForcing() : NoTeacherForcing()
-    for t = 2:size(inputs,2)
-        states[:,t] = (esn.leaking_rate-one(T))*states[:,t-1] + esn.leaking_rate*update(esn, states[:,t-1], inputs[:,t], outputs[:,t-1], arch)
-    end
+    states = reservoir_states(esn, inputs, outputs)
 
     # extended system states
-    X = zeros(1+esn.Ni+esn.Nr, Nd)
+    X = zeros(1+esn.Ni+esn.Nr, size(inputs,2))
     X[1,:] = one(T)
     X[2:1+esn.Ni,:] = inputs
     X[2+esn.Ni:end,:] = states
@@ -142,7 +147,7 @@ function predict!{T<:AbstractFloat}(esn::EchoStateNetwork{T}, inputs::Matrix{T};
 
     arch = esn.teacher_forcing ? TeacherForcing() : NoTeacherForcing()
     for t = 1:Nd
-        state[:] = (esn.leaking_rate-one(T))*state + esn.leaking_rate*update(esn, state, inputs[:,t+1], outputs[:,t], arch)
+        state[:] = (one(T)-esn.leaking_rate)*state + esn.leaking_rate*update(esn, state, inputs[:,t+1], outputs[:,t], arch)
         outputs[:,t+1] = esn.Wo*[one(T);inputs[:,t];state]
     end
 
