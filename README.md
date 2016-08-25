@@ -14,9 +14,9 @@ test_range = 2001:4000
 data_range = 1:4000
 
 esn = EchoStateNetwork{T}(Ni=1, No=1, Nr=500,
-                          spectral_radius=1.5,
+                          spectral_radius=1.2,
                           sparsity=0.95,
-                          leaking_rate=0.999,
+                          leaking_rate=0.99,
                           teacher_forcing=true,
                           rng=MersenneTwister(0x59))
 
