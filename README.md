@@ -12,7 +12,6 @@ using Random
 T = Float64
 data = convert(Array{T},CSV.read(filepath))'
 
-println(size(data))
 train_range = 1:2000
 test_range = 2001:4000
 data_range = 1:4000

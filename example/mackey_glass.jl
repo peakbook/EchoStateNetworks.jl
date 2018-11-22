@@ -12,7 +12,6 @@ filepath = joinpath(dirname(@__FILE__),"MackeyGlass_t17.txt")
 # end
 data = convert(Array{T},CSV.read(filepath))'
 
-println(size(data))
 train_range = 1:2000
 test_range = 2001:4000
 data_range = 1:4000
