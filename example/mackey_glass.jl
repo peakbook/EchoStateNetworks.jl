@@ -1,4 +1,7 @@
 using EchoStateNetworks
+using LinearAlgebra
+using CSV
+using Random
 
 T = Float64
 filepath = joinpath(dirname(@__FILE__),"MackeyGlass_t17.txt")
@@ -7,8 +10,9 @@ filepath = joinpath(dirname(@__FILE__),"MackeyGlass_t17.txt")
 #     run(`curl -o $(filepath) http://minds.jacobs-university.de/sites/default/files/uploads/mantas/code/MackeyGlass_t17.txt`)
 #     println("finish.")
 # end
-data = convert(Array{T},readcsv(filepath)')
+data = convert(Array{T},CSV.read(filepath))'
 
+println(size(data))
 train_range = 1:2000
 test_range = 2001:4000
 data_range = 1:4000
